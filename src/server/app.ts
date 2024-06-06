@@ -36,7 +36,7 @@ const START_SERVER = async () => {
   cron.schedule('*/10 * * * *', async () => {
     try {
       // Gửi request lên API
-      const response = await axios.get('https://auto.trisielts.online/v1/tags')
+      const response = await axios.get('https://auto.trisielts.online')
 
       // Xử lý dữ liệu trả về nếu cần
       console.log(response.data)
