@@ -1,13 +1,14 @@
 import express from 'express'
 import exitHook from 'async-exit-hook'
 import cors from 'cors'
+import cron from 'node-cron'
 
 import { corsOptions } from '@/config/cors'
 import { CLOSE_DB, CONNECT_DB } from '@/config/mongodb'
 import { env } from '@/config/environment'
 import { errorHandlingMiddleware } from '@/middlewares/errorHandlingMiddleware'
 import { APIs_V1 } from '@/routes/v1'
-import multer from 'multer'
+import axios from 'axios'
 
 const START_SERVER = async () => {
   const app = express()
@@ -30,6 +31,18 @@ const START_SERVER = async () => {
 
   app.listen(port, () => {
     console.log(`Hello World, I am running at http://${env.APP_HOST}:${port}`)
+  })
+
+  cron.schedule('*/10 * * * *', async () => {
+    try {
+      // Gửi request lên API
+      const response = await axios.get('https://auto.trisielts.online/v1/tags')
+
+      // Xử lý dữ liệu trả về nếu cần
+      console.log(response.data)
+    } catch (error) {
+      console.error('Error sending request:', error)
+    }
   })
 
   exitHook(() => {
