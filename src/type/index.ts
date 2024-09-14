@@ -6,12 +6,3 @@ export type PostData = {
   tags: string[]
   content: string
 }
-
-export enum ETYPESDESTROY {
-  IS_DESTROY = 'isDestroy'
-}
-
-export enum ETYPESFROM {
-  CMS = 'cms',
-  WEB = 'web'
-}

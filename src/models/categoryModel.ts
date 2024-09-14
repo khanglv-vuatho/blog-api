@@ -104,6 +104,7 @@ const getAll = async (type: string, page: number = 1, limit: number = 7) => {
     const totalCount = await db.collection(CATEGORY_COLLECTION_NAME).countDocuments(matchCondition(type))
     const totalPages = Math.ceil(totalCount / limit)
 
+    console.log({ categories })
     return {
       data: categories,
       meta: {
