@@ -37,9 +37,9 @@ const getDetails = async (categoryId: string) => {
   }
 }
 
-const getAll = async (type: string) => {
+const getAll = async (type: string, page: number, limit: number) => {
   try {
-    const getAllCategory = await categoryModel.getAll(type)
+    const getAllCategory = await categoryModel.getAll(type, page, limit)
 
     // Hàm chuyển đổi dữ liệu
 

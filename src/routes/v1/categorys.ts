@@ -2,7 +2,6 @@ import express from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { categoryValidation } from '@/validations/categoryValidation'
 import { categoryController } from '@/controllers/categoryController'
-import multer from 'multer'
 
 const Router = express.Router()
 

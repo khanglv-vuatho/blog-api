@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/sharp": "^0.32.0",
     "async-exit-hook": "^2.0.1",
     "axios": "^1.7.2",
     "cors": "^2.8.5",
@@ -26,6 +27,7 @@
     "node-cron": "^3.0.3",
     "nodemon": "^3.1.0",
     "rimraf": "^5.0.5",
+    "sharp": "^0.33.5",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "uuid": "^9.0.1"

@@ -4,6 +4,7 @@ import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '@/utils/validators'
 import Joi from 'joi'
 import { ObjectId } from 'mongodb'
 import { tagModel } from './tagModel'
+import { normalizeKeyword } from '@/utils/normalKeyword'
 
 const CATEGORY_COLLECTION_NAME = 'categorys'
 const CATEGORY_COLLECTION_SCHEMA = Joi.object({
@@ -14,7 +15,8 @@ const CATEGORY_COLLECTION_SCHEMA = Joi.object({
   createAt: Joi.date()
     .timestamp('javascript')
     .default(() => new Date()),
-  updateAt: Joi.date().timestamp('javascript').default(null)
+  updateAt: Joi.date().timestamp('javascript').default(null),
+  vietnameseTitle: Joi.string().max(100).allow('').optional()
 })
 
 const INVALID_UPDATE_FIELDS = ['_id', 'createAt']
@@ -35,8 +37,9 @@ const validateBeforeCreate = async (data: any) => {
 const createNew = async ({ title, slug }: { title: string; slug: string }) => {
   try {
     const db = await GET_DB()
-    const validData = await validateBeforeCreate({ title, slug })
+    const vietnameseTitle = normalizeKeyword(title)
 
+    const validData = await validateBeforeCreate({ title, slug, vietnameseTitle })
     if (Array.isArray(validData.tags)) {
       validData.tags = validData.tags.map((tag: string) => new ObjectId(tag))
     }
@@ -73,10 +76,11 @@ const getDetails = async (categoryId: string) => {
   }
 }
 
-const getAll = async (type: string) => {
+const getAll = async (type: string, page: number = 1, limit: number = 7) => {
   try {
     const db = await GET_DB()
 
+    const skip = (page - 1) * limit
     // Define the aggregation pipeline
     const pipeline = [
       {
@@ -93,9 +97,22 @@ const getAll = async (type: string) => {
     const categories = await db
       .collection(CATEGORY_COLLECTION_NAME)
       .aggregate([{ $match: matchCondition(type) }, ...pipeline])
+      .skip(skip)
+      .limit(limit)
       .toArray()
 
-    return categories
+    const totalCount = await db.collection(CATEGORY_COLLECTION_NAME).countDocuments(matchCondition(type))
+    const totalPages = Math.ceil(totalCount / limit)
+
+    return {
+      data: categories,
+      meta: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit
+      }
+    }
   } catch (error) {
     throw error
   }
@@ -112,9 +129,12 @@ const update = async (categoryId: string, data: any) => {
     if (data.tags) {
       data.tags = data.tags.map((tag: string) => new ObjectId(tag))
     }
+    const vietnameseTitle = normalizeKeyword(data.title)
+
+    const dataToUpdate = { ...data, vietnameseTitle }
 
     const db = await GET_DB()
-    const updateCategory = await db.collection(CATEGORY_COLLECTION_NAME).updateOne({ _id: new ObjectId(categoryId) }, { $set: data })
+    const updateCategory = await db.collection(CATEGORY_COLLECTION_NAME).updateOne({ _id: new ObjectId(categoryId) }, { $set: dataToUpdate })
 
     return updateCategory
   } catch (error) {

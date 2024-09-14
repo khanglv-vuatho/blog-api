@@ -18,7 +18,7 @@ const getAll = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { type } = req.query
     // Điều hướng sang service
-    const getAllTag = await tagService.getAll(type as string)
+    const getAllTag = await tagService.getAll(type as string, req.query.page as any, req.query.limit as any)
 
     res.status(StatusCodes.OK).json(getAllTag)
   } catch (error) {

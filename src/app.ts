@@ -7,6 +7,7 @@ import { CLOSE_DB, CONNECT_DB } from '@/config/mongodb'
 import { env } from '@/config/environment'
 import { errorHandlingMiddleware } from '@/middlewares/errorHandlingMiddleware'
 import { APIs_V1 } from '@/routes/v1'
+import { imageResizeMiddleware } from './middlewares/imageResizeMiddleware'
 
 const START_SERVER = async () => {
   const app = express()
@@ -21,6 +22,9 @@ const START_SERVER = async () => {
 
   //middleware xử lí lỗi tập trung
   app.use(errorHandlingMiddleware)
+
+  //middleware xử lí ảnh
+  app.use(imageResizeMiddleware)
 
   app.get('/', (req, res) => {
     res.end('<h1>Hello World!</h1>')

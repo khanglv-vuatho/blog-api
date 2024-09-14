@@ -30,7 +30,7 @@ const getAll = async (req: Request, res: Response, next: NextFunction) => {
   // Điều hướng sang service
   try {
     const { type } = req.query
-    const getAllPost = await postService.getAll(type as string)
+    const getAllPost = await postService.getAll(type as string, req.query.page as any, req.query.limit as any)
 
     res.status(StatusCodes.OK).json(getAllPost)
   } catch (error) {
@@ -94,13 +94,50 @@ const findBySlugTag = async (req: Request, res: Response, next: NextFunction) =>
   }
 }
 
+const getPopular = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Điều hướng sang service
+    const getPopular = await postService.getPopular()
+    res.status(StatusCodes.OK).json(getPopular)
+  } catch (error) {
+    next(error)
+  }
+}
+
+// Get all post by slug tag
+const getAllBySlugTag = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const getAllBySlugTag = await postService.getAllBySlugTag(req.query.slug as any)
+    console.log({ getAllBySlugTag })
+    res.status(StatusCodes.OK).json(getAllBySlugTag)
+  } catch (error) {
+    next(error)
+  }
+}
+
+const searchPost = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { keyword } = req.query
+    if (!keyword || typeof keyword !== 'string') {
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Invalid keyword' })
+    }
+    const searchResults = await postService.searchPost(keyword)
+    res.status(StatusCodes.OK).json(searchResults)
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const postController = {
   createNew,
   getDetails,
   getAll,
+  getPopular,
   update,
   deleteOneById,
   getAllTagAndCategory,
   findBySlugCategory,
-  findBySlugTag
+  findBySlugTag,
+  getAllBySlugTag,
+  searchPost
 }

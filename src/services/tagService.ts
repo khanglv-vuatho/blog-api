@@ -23,9 +23,9 @@ const createNew = async (reqBody: { title: string }) => {
   }
 }
 
-const getAll = async (type: string) => {
+const getAll = async (type: string, page: number, limit: number) => {
   try {
-    const getAllTag = await tagModel.getAll(type)
+    const getAllTag = await tagModel.getAll(type, page, limit)
 
     return getAllTag
   } catch (error) {

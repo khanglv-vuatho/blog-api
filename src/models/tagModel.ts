@@ -1,14 +1,15 @@
 import { GET_DB } from '@/config/mongodb'
 import { TYPESDESTROY, TYPESFROM } from '@/constants'
 import { matchCondition } from '@/utils/matchCondition'
+import { normalizeKeyword } from '@/utils/normalKeyword'
 import Joi from 'joi'
 import { ObjectId } from 'mongodb'
 
 const TAG_COLLECTION_NAME = 'tags'
-
 const TAG_COLLECTION_SCHEMA = Joi.object({
   title: Joi.string().required().max(50).strict(),
   slug: Joi.string().required().max(50).strict(),
+  vietnameseTitle: Joi.string().max(100).allow('').optional(),
   _destroy: Joi.boolean().default(false)
 })
 
@@ -17,6 +18,7 @@ const INVALID_UPDATE_FIELDS = ['_id', 'updateAt']
 interface TagData {
   title: string
   slug: string
+  vietnameseTitle: string
 }
 
 const validateBeforeCreate = async (data: TagData) => {
@@ -36,7 +38,8 @@ const findOneByTitle = async (title: string) => {
 const createNew = async ({ title, slug }: { title: string; slug: string }) => {
   try {
     const db = await GET_DB()
-    const validData = await validateBeforeCreate({ title, slug })
+    const vietnameseTitle = normalizeKeyword(title)
+    const validData = await validateBeforeCreate({ title, slug, vietnameseTitle })
     const createTag = await db.collection(TAG_COLLECTION_NAME).insertOne(validData)
 
     return createTag
@@ -45,12 +48,23 @@ const createNew = async ({ title, slug }: { title: string; slug: string }) => {
   }
 }
 
-const getAll = async (type: string) => {
+const getAll = async (type: string, page: number = 1, limit: number = 7) => {
   try {
     const db = await GET_DB()
+    const skip = (page - 1) * limit
+    const tags = await db.collection(TAG_COLLECTION_NAME).find(matchCondition(type)).skip(skip).limit(limit).toArray()
+    const totalCount = await db.collection(TAG_COLLECTION_NAME).countDocuments(matchCondition(type))
+    const totalPages = Math.ceil(totalCount / limit)
 
-    const tags = await db.collection(TAG_COLLECTION_NAME).find(matchCondition(type)).toArray()
-    return tags
+    return {
+      data: tags,
+      meta: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit
+      }
+    }
   } catch (error: any) {
     throw new Error(error)
   }
@@ -63,9 +77,11 @@ const update = async (tagId: string, data: any) => {
         delete data[fields]
       }
     })
+    const vietnameseTitle = normalizeKeyword(data.title)
+    const dataToUpdate = { ...data, vietnameseTitle }
     const db = await GET_DB()
 
-    const tag = await db.collection(TAG_COLLECTION_NAME).findOneAndUpdate({ _id: new ObjectId(tagId) }, { $set: data }, { returnDocument: 'after' })
+    const tag = await db.collection(TAG_COLLECTION_NAME).findOneAndUpdate({ _id: new ObjectId(tagId) }, { $set: dataToUpdate }, { returnDocument: 'after' })
     return tag
   } catch (error: any) {
     throw new Error(error)

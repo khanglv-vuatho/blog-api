@@ -32,7 +32,7 @@ const getAll = async (req: Request, res: Response, next: NextFunction) => {
     const { type } = req.query
 
     // Điều hướng sang service
-    const getAllCategory = await categoryService.getAll(type as string)
+    const getAllCategory = await categoryService.getAll(type as string, req.query.page as any, req.query.limit as any)
 
     res.status(StatusCodes.OK).json(getAllCategory)
   } catch (error) {

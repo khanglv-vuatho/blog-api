@@ -5,9 +5,20 @@ import { tagModel } from '@/models/tagModel'
 import { PostData } from '@/type'
 import { createSlug } from '@/utils/createTag'
 import { deleteFile, updateFile, uploadFile } from '@/worker'
-import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
+import sharp from 'sharp'
+import { ParsedQs } from 'qs'
 
+const resizeImage = async (buffer: Buffer, width?: number, height?: number) => {
+  const resizeOptions: sharp.ResizeOptions = {
+    fit: 'inside',
+    withoutEnlargement: true
+  }
+  if (width) resizeOptions.width = width
+  if (height) resizeOptions.height = height
+
+  return sharp(buffer).resize(resizeOptions).toBuffer()
+}
 const createNew = async (reqBody: PostData, file: any) => {
   // eslint-disable-next-line no-useless-catch
   try {
@@ -49,9 +60,9 @@ const getDetails = async (postId: string) => {
   }
 }
 
-const getAll = async (type: string) => {
+const getAll = async (type: string, page: number, limit: number) => {
   try {
-    const getAllPost = await postModel.getAll(type)
+    const getAllPost = await postModel.getAll(type, page, limit)
 
     return getAllPost
   } catch (error) {
@@ -169,6 +180,36 @@ const getDetailsBySlug = async (slug: string) => {
   }
 }
 
+const getPopular = async () => {
+  try {
+    const getPopular = await postModel.getPopular()
+    return getPopular
+  } catch (error) {
+    throw error
+  }
+}
+
+// Get all post by slug tag
+const getAllBySlugTag = async (slugTag: string) => {
+  try {
+    const tag = await tagModel.findOneBySlug(slugTag)
+    const posts = await postModel.getAllByTagId(tag?._id as any)
+    console.log({ posts })
+    return posts
+  } catch (error) {
+    throw error
+  }
+}
+
+const searchPost = async (keyword: string) => {
+  try {
+    const search = await postModel.searchPost(keyword)
+    return search
+  } catch (error) {
+    throw error
+  }
+}
+
 export const postService = {
   createNew,
   getDetails,
@@ -178,5 +219,8 @@ export const postService = {
   getAllTagAndCategory,
   findBySlugCategory,
   findBySlugTag,
-  getDetailsBySlug
+  getDetailsBySlug,
+  getPopular,
+  getAllBySlugTag,
+  searchPost
 }
