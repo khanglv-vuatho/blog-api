@@ -51,10 +51,10 @@ const createNew = async ({ title, slug }: { title: string; slug: string }) => {
 const getAll = async (type: string, page: number = 1, limit: number = 7) => {
   try {
     const db = await GET_DB()
-    const skip = (page - 1) * limit
-    const tags = await db.collection(TAG_COLLECTION_NAME).find(matchCondition(type)).skip(skip).limit(limit).toArray()
+    const skip = (page - 1) * Number(limit)
+    const tags = await db.collection(TAG_COLLECTION_NAME).find(matchCondition(type)).skip(skip).limit(Number(limit)).toArray()
     const totalCount = await db.collection(TAG_COLLECTION_NAME).countDocuments(matchCondition(type))
-    const totalPages = Math.ceil(totalCount / limit)
+    const totalPages = Math.ceil(Number(totalCount) / Number(limit))
 
     return {
       data: tags,

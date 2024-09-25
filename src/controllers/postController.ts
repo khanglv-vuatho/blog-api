@@ -1,3 +1,4 @@
+import { TYPESFROM } from '@/constants'
 import { postService } from '@/services/postService'
 import { NextFunction, Response, Request } from 'express'
 import { StatusCodes } from 'http-status-codes'
@@ -29,8 +30,9 @@ const getDetails = async (req: Request, res: Response, next: NextFunction) => {
 const getAll = async (req: Request, res: Response, next: NextFunction) => {
   // Điều hướng sang service
   try {
-    const { type } = req.query
-    const getAllPost = await postService.getAll(type as string, req.query.page as any, req.query.limit as any)
+    const { type, page, limit } = req.query
+    console.log({ page, limit })
+    const getAllPost = await postService.getAll(type as string, Number(page), Number(limit))
 
     res.status(StatusCodes.OK).json(getAllPost)
   } catch (error) {
@@ -106,9 +108,9 @@ const getPopular = async (req: Request, res: Response, next: NextFunction) => {
 
 // Get all post by slug tag
 const getAllBySlugTag = async (req: Request, res: Response, next: NextFunction) => {
+  const { page, limit, slug } = req.query
   try {
-    const getAllBySlugTag = await postService.getAllBySlugTag(req.query.slug as any)
-    console.log({ getAllBySlugTag })
+    const getAllBySlugTag = await postService.getAllBySlugTag(slug as string, Number(page), Number(limit))
     res.status(StatusCodes.OK).json(getAllBySlugTag)
   } catch (error) {
     next(error)
@@ -117,11 +119,13 @@ const getAllBySlugTag = async (req: Request, res: Response, next: NextFunction) 
 
 const searchPost = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { keyword } = req.query
-    if (!keyword || typeof keyword !== 'string') {
-      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Invalid keyword' })
+    const { keyword, page, limit } = req.query
+    console.log({ keyword, page, limit })
+    if (keyword === '') {
+      const getAllPost = await postService.getAll(TYPESFROM.WEB, Number(page), Number(limit))
+      return res.status(StatusCodes.OK).json(getAllPost)
     }
-    const searchResults = await postService.searchPost(keyword)
+    const searchResults = await postService.searchPost(keyword as string, Number(page), Number(limit))
     res.status(StatusCodes.OK).json(searchResults)
   } catch (error) {
     next(error)

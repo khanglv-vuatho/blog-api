@@ -25,7 +25,9 @@ const POST_COLLECTION_SCHEMA = Joi.object({
   slug: Joi.string().required().max(50).strict(),
   _destroy: Joi.boolean().default(false),
   popular: Joi.boolean().default(false),
-  vietnameseTitle: Joi.string().max(100).allow('').optional()
+  vietnameseTitle: Joi.string().max(100).allow('').optional(),
+  author: Joi.string().max(50).allow(''),
+  authorAvatar: Joi.string().max(500).allow('')
 })
 
 const INVALID_UPDATE_FIELDS = ['_id', 'updateAt']
@@ -90,12 +92,10 @@ const getDetails = async (postId: string) => {
   }
 }
 
-const getAll = async (type: string, page: number = 1, limit: number = 7) => {
+const getAll = async (type: string, page: number = 1, limit: number = 6) => {
   try {
     const db = await GET_DB()
-    console.log({ page })
-
-    const skip = (page - 1) * limit
+    const skip = (Number(page) - 1) * Number(limit)
     const pipeline = [
       {
         $lookup: {
@@ -117,13 +117,21 @@ const getAll = async (type: string, page: number = 1, limit: number = 7) => {
     const posts = await db
       .collection(POST_COLLECTION_NAME)
       .aggregate([{ $match: matchCondition(type) }, ...pipeline])
-      .skip(skip)
-      .limit(limit)
+      .skip(Number(skip))
+      .limit(Number(limit))
       .toArray()
 
     const totalCount = await db.collection(POST_COLLECTION_NAME).countDocuments(matchCondition(type))
     const totalPages = Math.ceil(totalCount / limit)
-
+    console.log({
+      data: posts,
+      meta: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit
+      }
+    })
     return {
       data: posts,
       meta: {
@@ -237,9 +245,11 @@ const getAllByCategoryId = async (categoryId: ObjectId) => {
   }
 }
 
-const getAllByTagId = async (tagId: ObjectId) => {
+const getAllByTagId = async (tagId: ObjectId, page: number = 1, limit: number = 7) => {
+  console.log({ tagId })
   try {
     const db = await GET_DB()
+    const skip = (Number(page) - 1) * Number(limit)
     const pipeline = [
       {
         $lookup: {
@@ -258,12 +268,24 @@ const getAllByTagId = async (tagId: ObjectId) => {
         }
       }
     ]
-    const posts = db
+    const posts = await db
       .collection(POST_COLLECTION_NAME)
-      .aggregate([{ $match: { tagId } }, ...pipeline])
+      .aggregate([{ $match: { tagId: { $in: [tagId] } } }, ...pipeline])
+      .skip(Number(skip))
+      .limit(Number(limit))
       .toArray()
 
-    return posts
+    const totalCount = await db.collection(POST_COLLECTION_NAME).countDocuments({ tagId: { $in: [tagId] } })
+    const totalPages = Math.ceil(Number(totalCount) / Number(limit))
+    return {
+      data: posts,
+      meta: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit
+      }
+    }
   } catch (error) {
     throw error
   }
@@ -283,18 +305,19 @@ const getPopular = async () => {
   try {
     const db = await GET_DB()
     const post = await db.collection(POST_COLLECTION_NAME).find({ popular: true }).toArray()
+
     return post
   } catch (error) {
     throw error
   }
 }
 
-const searchPost = async (keyword: string, page: number = 1, limit: number = 10) => {
+const searchPost = async (keyword: string, page: number = 1, limit: number = 6) => {
   try {
     const db = await GET_DB()
     const normalizedKeyword = keyword.trim().toLowerCase()
 
-    const skip = (page - 1) * limit
+    const skip = (Number(page) - 1) * Number(limit)
 
     const searchQuery = {
       $or: [
@@ -333,10 +356,10 @@ const searchPost = async (keyword: string, page: number = 1, limit: number = 10)
         $sort: { views: -1 }
       },
       {
-        $skip: skip
+        $skip: Number(skip)
       },
       {
-        $limit: limit
+        $limit: Number(limit)
       }
     ]
 
@@ -344,10 +367,10 @@ const searchPost = async (keyword: string, page: number = 1, limit: number = 10)
 
     const totalCount = await db.collection(POST_COLLECTION_NAME).countDocuments(searchQuery)
 
-    const totalPages = Math.ceil(totalCount / limit)
-
+    const totalPages = Math.ceil(Number(totalCount) / Number(limit))
+    console.log({ posts, totalPages, totalCount, limit })
     return {
-      posts,
+      data: posts,
       meta: {
         currentPage: page,
         totalPages,

@@ -6,19 +6,7 @@ import { PostData } from '@/type'
 import { createSlug } from '@/utils/createTag'
 import { deleteFile, updateFile, uploadFile } from '@/worker'
 import { v4 as uuidv4 } from 'uuid'
-import sharp from 'sharp'
-import { ParsedQs } from 'qs'
 
-const resizeImage = async (buffer: Buffer, width?: number, height?: number) => {
-  const resizeOptions: sharp.ResizeOptions = {
-    fit: 'inside',
-    withoutEnlargement: true
-  }
-  if (width) resizeOptions.width = width
-  if (height) resizeOptions.height = height
-
-  return sharp(buffer).resize(resizeOptions).toBuffer()
-}
 const createNew = async (reqBody: PostData, file: any) => {
   // eslint-disable-next-line no-useless-catch
   try {
@@ -62,7 +50,7 @@ const getDetails = async (postId: string) => {
 
 const getAll = async (type: string, page: number, limit: number) => {
   try {
-    const getAllPost = await postModel.getAll(type, page, limit)
+    const getAllPost = await postModel.getAll(type, Number(page), Number(limit))
 
     return getAllPost
   } catch (error) {
@@ -190,20 +178,19 @@ const getPopular = async () => {
 }
 
 // Get all post by slug tag
-const getAllBySlugTag = async (slugTag: string) => {
+const getAllBySlugTag = async (slugTag: string, page: number, limit: number) => {
   try {
     const tag = await tagModel.findOneBySlug(slugTag)
-    const posts = await postModel.getAllByTagId(tag?._id as any)
-    console.log({ posts })
+    const posts = await postModel.getAllByTagId(tag?._id as any, page, limit)
     return posts
   } catch (error) {
     throw error
   }
 }
 
-const searchPost = async (keyword: string) => {
+const searchPost = async (keyword: string, page: number, limit: number) => {
   try {
-    const search = await postModel.searchPost(keyword)
+    const search = await postModel.searchPost(keyword, page, limit)
     return search
   } catch (error) {
     throw error

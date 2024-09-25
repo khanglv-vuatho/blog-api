@@ -10,3 +10,8 @@ export const WHITELIST_DOMAINS = [
   'https://trisielts.online',
   'https://auto.trisielts.online'
 ]
+
+export const BOOKMARK_ACTION = {
+  ADD: 'add',
+  REMOVE: 'remove'
+}
